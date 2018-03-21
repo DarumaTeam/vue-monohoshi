@@ -14,7 +14,7 @@ export default {
     return {
       i2cAccess: null,
       adc: null,
-      testResult: null,
+      testResult: null
     }
   },
   async mounted() {
@@ -32,14 +32,30 @@ export default {
     async run() {
       // 最初のデータを取るまで3秒待つ
       await sleep(3000);
-      //this.testResult = await this.test();
+      this.testResult = await this.test();
 
-      while(true) {
+      while (true) {
         const adcData = await this.adc.read();
         publisher.publish("resultData", adcData);
-
-        sleep(1000);
+        await sleep(1000);
       }
+    },
+    async test() {
+      const testResults = [];
+      while (true) {
+        const adcData = await this.adc.read();
+        testResults.push(adcData.value);
+
+        // データが 100 になったら、テストを終了するために処理ループを削除
+        if (testResults.length === 100) {
+          break;
+        }
+
+        await sleep(1000);
+      }
+
+      // 中央値を整数にして返す
+      return Math.floor(median(testResults));
     }
   },
   components: {
